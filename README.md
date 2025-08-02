@@ -6,6 +6,7 @@ A simple web app built using **Flask** and **OpenAI GPT** that helps you generat
 <img width="1920" height="1020" alt="Screenshot 2025-08-02 093633" src="https://github.com/user-attachments/assets/72ea0136-d2a9-4b5e-85e4-566e6add543d" />
 <img width="1920" height="1020" alt="Screenshot 2025-08-02 093649" src="https://github.com/user-attachments/assets/f0c4650a-4cc7-4b41-9c8f-0f5a73d60989" />
 <img width="1920" height="1020" alt="Screenshot 2025-08-02 093703" src="https://github.com/user-attachments/assets/ea640278-8ca6-48b4-abd3-15d46d63cb23" />
+<img width="1920" height="1020" alt="Screenshot 2025-08-02 143646" src="https://github.com/user-attachments/assets/06e79325-5109-4838-aa6a-bd8f8675dd37" />
 
 
 ## 🚀 Features
