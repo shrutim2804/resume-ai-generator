@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI Resume & Cover Letter Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          animation: {
+            'gradient-x': 'gradient-x 10s ease infinite',
+            'pulse': 'pulse 2s infinite',
+          },
+          keyframes: {
+            'gradient-x': {
+              '0%, 100%': { 'background-position': '0% 50%' },
+              '50%': { 'background-position': '100% 50%' },
+            },
+            'pulse': {
+              '0%': { transform: 'scale(1)' },
+              '50%': { transform: 'scale(1.05)' },
+              '100%': { transform: 'scale(1)' },
+            },
+          },
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-screen text-white bg-gradient-to-br from-[#0f2027] via-[#203a43] to-[#2c5364] dark:from-[#0f0f0f] dark:via-[#1a1a1a] dark:to-[#2c2c2c] animate-gradient-x p-6 bg-[length:200%_200%]">
+
+  <div class="max-w-7xl mx-auto p-6 bg-white/10 dark:bg-white/5 rounded-2xl shadow-2xl border border-white/20 backdrop-blur-md">
+
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <h1 class="text-4xl font-bold bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent animate-pulse">AI Resume & Cover Letter Generator</h1>
+      <button onclick="toggleTheme()" class="flex items-center px-4 py-2 rounded-full bg-blue-500 dark:bg-gray-800 hover:shadow-md transition relative">
+        <span class="mr-2 text-lg" id="toggle-icon">🌞</span>
+        <div class="w-12 h-6 bg-gray-300 rounded-full relative transition-colors duration-300">
+          <div class="dot w-6 h-6 bg-transparent rounded-full absolute transition-transform duration-300 transform" id="toggle-dot"></div>
+        </div>
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex space-x-4 mb-6">
+      <button onclick="showForm('resume')" class="tab-button">Resume</button>
+      <button onclick="showForm('cover')" class="tab-button">Cover Letter</button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8">
+      <!-- Resume Form -->
+      <div id="resume-form">
+        <h2 class="text-xl font-semibold mb-3 text-cyan-400">Resume Details</h2>
+        <form class="grid gap-4">
+          <input type="text" id="res-name" placeholder="Full Name" class="input" />
+          <input type="text" id="res-role" placeholder="Job Title" class="input" />
+          <input type="email" id="res-email" placeholder="Email" class="input" />
+          <input type="text" id="res-phone" placeholder="Phone Number" class="input" />
+          <input type="text" id="res-location" placeholder="Location" class="input" />
+          <input type="date" id="res-dob" class="input" />
+          <input type="text" id="res-experience" placeholder="Years of Experience" class="input" />
+          <textarea id="res-skills" placeholder="Skills, Technologies, Achievements" class="input" rows="3"></textarea>
+          <textarea id="res-education" placeholder="Education Details" class="input" rows="2"></textarea>
+          <button type="button" onclick="generateResume()" class="btn-generate">Generate Resume</button>
+        </form>
+        <pre id="resume-output" class="output mt-4"></pre>
+        <div class="mt-4 flex justify-center">
+          <button onclick="downloadPDF('resume')" class="btn-generate">📄 Download Resume PDF</button>
+        </div>
+      </div>
+
+      <!-- Cover Letter Form -->
+      <div id="cover-form" class="hidden">
+        <h2 class="text-xl font-semibold mb-3 text-green-400">Cover Letter Details</h2>
+        <form class="grid gap-4">
+          <input type="text" id="cov-name" placeholder="Your Name" class="input" />
+          <input type="text" id="cov-role" placeholder="Position Applying For" class="input" />
+          <input type="text" id="cov-company" placeholder="Company Name" class="input" />
+          <input type="text" id="cov-location" placeholder="Location" class="input" />
+          <input type="text" id="cov-experience" placeholder="Years of Experience" class="input" />
+          <textarea id="cov-skills" placeholder="Relevant Skills, Strengths, Experience" class="input" rows="3"></textarea>
+          <textarea id="cov-motivation" placeholder="Why are you a good fit?" class="input" rows="2"></textarea>
+          <button type="button" onclick="generateCover()" class="btn-generate">Generate Cover Letter</button>
+        </form>
+        <pre id="cover-output" class="output mt-4"></pre>
+        <div class="mt-4 flex justify-center">
+          <button onclick="downloadPDF('cover')" class="btn-generate">📄 Download Cover Letter PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script -->
+  <script>
+    function showForm(type) {
+      document.getElementById('resume-form').classList.toggle('hidden', type !== 'resume');
+      document.getElementById('cover-form').classList.toggle('hidden', type !== 'cover');
+    }
+
+    function toggleTheme() {
+      document.documentElement.classList.toggle('dark');
+      const dot = document.getElementById('toggle-dot');
+      const icon = document.getElementById('toggle-icon');
+      dot.classList.toggle('translate-x-6');
+      const toggleButton = document.querySelector('.w-12');
+      toggleButton.classList.toggle('bg-gray-600');
+      toggleButton.classList.toggle('bg-gray-300');
+      icon.textContent = icon.textContent === '🌞' ? '🌜' : '🌞';
+    }
+
+    async function callAI(prompt, outputId) {
+      const res = await fetch("/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt })
+      });
+      const data = await res.json();
+      document.getElementById(outputId).innerText = data?.choices?.[0]?.message?.content || "⚠️ No content.";
+    }
+
+    async function generateResume() {
+      const name = document.getElementById("res-name").value;
+      const role = document.getElementById("res-role").value;
+      const email = document.getElementById("res-email").value;
+      const phone = document.getElementById("res-phone").value;
+      const location = document.getElementById("res-location").value;
+      const dob = document.getElementById("res-dob").value;
+      const experience = document.getElementById("res-experience").value;
+      const skills = document.getElementById("res-skills").value;
+      const education = document.getElementById("res-education").value;
+
+      const prompt = `Create a professional resume for ${name}, applying for ${role}.
+Contact: ${email}, ${phone}, based in ${location}.
+Date of Birth: ${dob}.
+Experience: ${experience} years.
+Skills: ${skills}.
+Education: ${education}.
+Include: summary, experience, education, skills.`;
+
+      await callAI(prompt, "resume-output");
+    }
+
+    async function generateCover() {
+      const name = document.getElementById("cov-name").value;
+      const role = document.getElementById("cov-role").value;
+      const company = document.getElementById("cov-company").value;
+      const location = document.getElementById("cov-location").value;
+      const experience = document.getElementById("cov-experience").value;
+      const skills = document.getElementById("cov-skills").value;
+      const motivation = document.getElementById("cov-motivation").value;
+
+      const prompt = `Write a cover letter for ${name}, applying for ${role} at ${company}.
+Experience: ${experience} years.
+Location: ${location}.
+Skills: ${skills}.
+Motivation: ${motivation}.
+Make it formal, tailored, and persuasive.`;
+
+      await callAI(prompt, "cover-output");
+    }
+
+    function downloadPDF(type) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      let content = '';
+      let filename = '';
+
+      if (type === 'resume') {
+        content = document.getElementById('resume-output').innerText;
+        filename = 'Resume.pdf';
+      } else {
+        content = document.getElementById('cover-output').innerText;
+        filename = 'CoverLetter.pdf';
+      }
+
+      const lines = doc.splitTextToSize(content, 180);
+      doc.text(lines, 10, 10);
+      doc.save(filename);
+    }
+  </script>
+
+  <style>
+    .input {
+      @apply w-full p-3 rounded-lg border transition focus:outline-none focus:ring-2;
+      color: black;
+      background-color: rgba(0, 255, 255, 0.07);
+      border-color: rgba(0, 255, 255, 0.3);
+    }
+
+    .input::placeholder { color: #00aabb; }
+    .dark .input { color: white; background-color: rgba(0, 255, 255, 0.08); border-color: rgba(0, 255, 255, 0.3); }
+    .dark .input::placeholder { color: #77e0ff; }
+
+    .btn-generate {
+      @apply py-3 px-4 rounded-md font-bold transition-all duration-300 shadow-md border-2 border-transparent;
+      background: linear-gradient(145deg, #00ffc8, #00f0ff);
+      color: #000;
+      font-size: 1.1rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn-generate::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(255, 255, 255, 0.15);
+      transition: transform 0.3s;
+      transform: scale(0);
+      border-radius: 0.5rem;
+    }
+
+    .btn-generate:hover::after {
+      transform: scale(1);
+    }
+
+    .btn-generate:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 18px #00ffe0cc, 0 0 10px #00f0ffcc;
+    }
+
+    .output {
+      background: linear-gradient(135deg, rgba(0, 242, 255, 0.08), rgba(0, 165, 255, 0.05));
+      padding: 2rem;
+      border-radius: 1rem;
+      border: 2px solid #00f0ff44;
+      box-shadow: 0 0 20px #00f0ff33, 0 0 40px #00e1ff22, inset 0 0 20px #00e1ff11;
+      color: white;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      max-height: 600px;
+      font-family: 'Courier New', monospace;
+      font-size: 1rem;
+      line-height: 1.7;
+      word-break: break-word;
+      animation: pulseGlow 6s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow: 0 0 12px #00f0ff55, 0 0 20px #00c3ff33;
+      }
+      50% {
+        box-shadow: 0 0 25px #00eaffaa, 0 0 45px #00d8ffaa;
+      }
+    }
+
+    .tab-button {
+      @apply px-4 py-2 rounded-lg font-semibold shadow-md transition duration-300;
+      background: linear-gradient(to right, #00f0ff, #00ffc8);
+      color: #000;
+    }
+
+    .tab-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #00f0ff, 0 0 20px #00ffc8;
+    }
+
+    .dot {
+      transition: transform 0.3s, background-color 0.3s;
+    }
+
+    .translate-x-6 {
+      transform: translateX(100%);
+    }
+  </style>
+
+</body>
+</html>
